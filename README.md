@@ -51,6 +51,7 @@ If you have the manual requirements fulfilled, you can skip ahead to --From Manu
 - In the command line/Terminal, navigate to Catalog/vagrant and run `vagrant up`
 - Once that completes, run `vagrant ssh` to connect to the machine.
 - Inside the vm, run `cd /vagrant/catalog`, and continue the instructions below.
+
 ###From Manual
 - once inside catalog, use `python application.py` to run the Flask Application. the website can be found by opening a - web browser and going to `http://localhost:5000/`.
 - Users on the website can now log in using google+ to create categories and items. Users can create items their own private categories, as well as those marked as public Categories.
@@ -58,16 +59,17 @@ If you have the manual requirements fulfilled, you can skip ahead to --From Manu
 - For an example of how the website can work, go to `http://localhost:5000/catalog/testdata` to create some test data.
 - The Webserver can be stopped with Ctrl+C on the Vagrant. (Command+C for Mac)
 - While it stopped, the database can be wiped by deleting `catalog.db` from `Vagrant/catalog`. Make sure to also delete the contents of `Vagrant/catalog/static/pictures/`.
+
 ###Extras
-To Disable the testdata function, as well as the extra information given on database errors, open up `Vagrant/catalog/application.py`, Navigate to `Server Settings` and change DEBUG to False (no quotes).
-To Change the url that can be used to visit the website, open up `Vagrant/catalog/application.py`, Navigate to `Server Settings` and change URL and PORT to the desired values.
-With the included files, Google+ will only accept log in attempts from `http://localhost:5000/` or `http://192.168.1.180:5000/`.
-To Change these, you will need a Google Developers account.
-Go to `https://console.developers.google.com` and create a project.
-Than go to APIs & auth and select `Create new Client ID`.
-Select `Web Application` as the type, and add in the urls you would like to use under `Javascript origins`. Leave redirects blank.
-Once finished, create the ID. On the client ID select `Download JSON`. save the file as `client_secrets.json` and place it in `Vagrant/catalog/`, replacing the one already there.
-You can now run the webserver again, and the logins will be done through your new project.
+- To Disable the testdata function, as well as the extra information given on database errors, open up `Vagrant/catalog/application.py`, Navigate to `Server Settings` and change DEBUG to False (no quotes).
+- To Change the url that can be used to visit the website, open up `Vagrant/catalog/application.py`, Navigate to `Server Settings` and change URL and PORT to the desired values.
+- With the included files, Google+ will only accept log in attempts from `http://localhost:5000/` or `http://192.168.1.180:5000/`.
+- To Change these, you will need a Google Developers account.
+- Go to `https://console.developers.google.com` and create a project.
+- Than go to APIs & auth and select `Create new Client ID`.
+- Select `Web Application` as the type, and add in the urls you would like to use under `Javascript origins`. Leave redirects blank.
+- Once finished, create the ID. On the client ID select `Download JSON`. save the file as `client_secrets.json` and place it in `Vagrant/catalog/`, replacing the one already there.
+- You can now run the webserver again, and the logins will be done through your new project.
 
 
 ##Extra Credit
