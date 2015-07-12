@@ -1,17 +1,19 @@
 #Basic Functionality
 import os
 import random, string
+from functools import wraps
 #Flask Imports
 from flask import Flask, render_template, make_response, redirect, request, url_for, flash, jsonify
 from flask import session as login_session
 from werkzeug import secure_filename
+from flask.ext.seasurf import SeaSurf
 #SQLAlchemy Imports
 from sqlalchemy import create_engine, desc
 from sqlalchemy.orm import sessionmaker
 from database_setup import Base, Category, Item, User
 #Oauth imports for GConnect
 from oauth2client.client import flow_from_clientsecrets
-from oauth2client.client import FlowExchangeError
+from oauth2client.client import FlowExchangeError, OAuth2Credentials
 import httplib2
 import json
 import requests
@@ -26,12 +28,12 @@ All Routes
 /catalog/
 /catalog/login
 /catalog/new/item 
-/catalog/edit/<item>/ 
-/catalog/delete/<item>/ 
-/catalog/<category>/
+/catalog/edit/item/<item>/ 
+/catalog/delete/item/<item>/ 
+/catalog/category/<category>/
 /catalog/new/category 
-/catalog/edit/<category>/ 
-/catalog/delete/<category>/
+/catalog/edit/category/<category>/ 
+/catalog/delete/category/<category>/
 /catalog/API/JSON/
 /catalog/API/JSON/<category>
 /catalog/API/JSON/item/<item>
@@ -54,6 +56,8 @@ ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg', 'gif'])
 #Configure Flask Application
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+#set up seasurf
+csrf = SeaSurf(app)
 
 # Setup for the SQLAlchemy Session
 engine = create_engine('sqlite:///catalog.db')
@@ -87,9 +91,27 @@ if DEBUG:
     session.add(itemFour)
     itemFive = Item(category_id='3',name='Warhammer: Forbidden Stars',description='Buff Ultramarines Pl0x', user_id='1')
     session.add(itemFive)
+    itemSix = Item(category_id='4',name='Thing',description='Thing', user_id='1')
+    session.add(itemSix)
     session.commit()
     flash('Test Data Added')
+    session.delete(itemSix)
+    session.commit()
     return redirect(url_for('.catalogListHome'))
+
+#################
+### Decorator ###
+#################
+
+#Require Logins for some pages
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'username' not in login_session:
+            flash('You need to log in to do that')
+            return redirect(url_for('catalogLogin', next=request.url))
+        return f(*args, **kwargs)
+    return decorated_function
 
 ######################
 ### Authentication ###
@@ -98,12 +120,14 @@ if DEBUG:
 #Sesion Login
 @app.route('/catalog/login')
 def catalogLogin():
+    next=request.args.get('next', '')
     state= ''.join(random.choice(string.ascii_uppercase + string.digits) for x in xrange(32))
     login_session['state'] = state
     #return "The Current session state is %s" % (login_session['state'],)
-    return render_template('signin.html', STATE=state)
+    return render_template('signin.html', STATE=state, next=next)
 
 #Google Connection Process
+@csrf.exempt
 @app.route('/gconnect', methods=['POST'])
 def gconnect():
     if request.args.get('state') != login_session['state']:
@@ -150,7 +174,8 @@ def gconnect():
         response.headers['Content-Type'] = 'application/json'
         return response
     #store the token
-    login_session['credentials'] = credentials
+    login_session['credentials'] = credentials.to_json()
+    print login_session['credentials']
     login_session['gplus_id'] = gplus_id
     #get the user info
     userinfo_url = "https://www.googleapis.com/oauth2/v1/userinfo"
@@ -183,7 +208,8 @@ def gconnect():
 #Disconnect from Google and Wipe the session
 @app.route('/gdisconnect')
 def gdisconnect():
-    credentials = login_session.get('credentials')
+    credentials = OAuth2Credentials.from_json(login_session.get('credentials'))
+    print credentials
     if not credentials:
         response = make_response(json.dumps('Current user is not connected.'),401)
         response.headers['Content-Type'] = 'application/json'
@@ -230,6 +256,7 @@ def gdisconnect():
 @app.route('/')
 @app.route('/catalog/')
 def catalogListHome():
+    #Latest 5 Items
     items = session.query(Item).join('category').order_by(desc(Item.changed)).limit(5)
     category = session.query(Category).all()
     itemcount = session.query(Item)
@@ -237,10 +264,8 @@ def catalogListHome():
 
 #Create a New Category
 @app.route('/catalog/new/category', methods=['GET','POST'])
+@login_required
 def catalogAddCategory():
-    if 'username' not in login_session:
-      flash('Please sign in to create a category.')
-      return redirect(url_for('.catalogLogin'))
     if request.method == 'GET':
         return render_template('newcategory.html')
     else:
@@ -258,12 +283,11 @@ def catalogAddCategory():
         return redirect(url_for('.catalogListCategory', category=newName))
 
 #Edit a Category
-@app.route('/catalog/edit/<category>/', methods=['GET','POST'])
+@app.route('/catalog/edit/category/<category>/', methods=['GET','POST'])
+@login_required
 def catalogEditCategory(category):
-    if 'username' not in login_session:
-      return redirect(url_for('.catalogLogin'))
     category = session.query(Category).filter_by(name = category).first()
-    if 'user_id' not in login_session or category.user_id != login_session['user_id']:
+    if category.user_id != login_session['user_id']:
         flash("You do not own that Category")
         return redirect(url_for('.catalogListHome'))
     if request.method == 'GET':
@@ -292,12 +316,11 @@ def catalogEditCategory(category):
             return redirect(url_for('.catalogListCategory', category=oldName))
 
 #Delete a Category
-@app.route('/catalog/delete/<category>/', methods=['GET','POST'])
+@app.route('/catalog/delete/category/<category>/', methods=['GET','POST'])
+@login_required
 def catalogDelCategory(category):
-    if 'username' not in login_session:
-      return redirect(url_for('.catalogLogin'))
     category = session.query(Category).filter_by(name = category).first()
-    if 'user_id' not in login_session or category.user_id != login_session['user_id']:
+    if category.user_id != login_session['user_id']:
         flash("You do not own that Category")
         return redirect(url_for('.catalogListCategory', category = category))
     if request.method == 'GET':
@@ -324,7 +347,7 @@ def catalogDelCategory(category):
         return redirect(url_for('.catalogListHome'))
 
 #List the Items in a Category
-@app.route('/catalog/<category>/')
+@app.route('/catalog/category/<category>/')
 def catalogListCategory(category):
     category = session.query(Category).filter_by(name = category).first()
     if not category:
@@ -338,10 +361,8 @@ def catalogListCategory(category):
 
 #Create a new Item
 @app.route('/catalog/new/item', methods=['GET','POST'])
+@login_required
 def catalogAddItem():
-    if 'username' not in login_session:
-      flash('Please sign in to create an item.')
-      return redirect(url_for('.catalogLogin'))
     if request.method == 'GET':
         default=request.args.get('category', '')
         category = session.query(Category).all()
@@ -349,6 +370,9 @@ def catalogAddItem():
     else:
         picture = request.files['picture']
         newName = request.form['name']
+        if not newName:
+            flash("Name can't be empty")
+            return redirect(url_for('.catalogAddItem'))
         newCategory = request.form['category']
         category = session.query(Category).get(newCategory)
         if not category.public and login_session['user_id'] != category.user_id:
@@ -374,10 +398,11 @@ def catalogAddItem():
             return redirect(url_for('.catalogAddItem'))
 
 #Edit an Item
-@app.route('/catalog/edit/<item>/', methods=['GET','POST'])
+@app.route('/catalog/edit/item/<item>/', methods=['GET','POST'])
+@login_required
 def catalogEditItem(item):
     item = session.query(Item).get(item)
-    if 'user_id' not in login_session or item.user_id != login_session['user_id']:
+    if item.user_id != login_session['user_id']:
         flash("You do not own that Item")
         return redirect(url_for('.catalogListHome'))
     if request.method == 'GET':
@@ -407,7 +432,8 @@ def catalogEditItem(item):
         return redirect(url_for('.catalogListCategory', category=session.query(Category).get(newCategory).name))
 
 #Delete an item.
-@app.route('/catalog/delete/<item>/', methods=['GET','POST'])
+@app.route('/catalog/delete/item/<item>/', methods=['GET','POST'])
+@login_required
 def catalogDelItem(item):
     item = session.query(Item).get(item)
     category = session.query(Category).get(item.category_id)
@@ -433,7 +459,7 @@ def catalogDelItem(item):
         flash('Menu Item %s Removed' % (oldName,))
         return redirect(url_for('.catalogListCategory', category=category.name))
 
-#####################cata
+#####################
 ### API ENDPOINTS ###
 #####################
 

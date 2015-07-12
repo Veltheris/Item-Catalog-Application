@@ -6,6 +6,7 @@
 <p>Name:</p>
 <input type='text' size='30' name='name' required><br />
 <br /><input type="checkbox" name="public" value="true" checked>Make Public (Anyone can add Items)<br />
+<input type="hidden" name="_csrf_token" value="{{csrf_token()}}" />
 <br /><input type='submit' value='Create'>
 <a href="{{url_for('.catalogListHome')}}">Cancel</a>
 </form>

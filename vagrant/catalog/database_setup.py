@@ -25,7 +25,7 @@ class Category(Base):
     id = Column(Integer, primary_key = True)
     public = Column(Boolean, default = True)
     user_id = Column(Integer, ForeignKey('user.id'))
-    user = relationship(User)
+    user = relationship(User, single_parent=True, cascade="delete, delete-orphan")
 
 #The items themselves. The Picture only refers to a pointer, rather than storing the image itself.
 #There is a lot of debate on the internet about how to store images...
@@ -35,9 +35,9 @@ class Item(Base):
     name = Column(String(80),nullable = False, primary_key = True)
     description = Column(String(250))
     category_id = Column(String(80), ForeignKey('category.id'))
-    category = relationship(Category)
+    category = relationship(Category, single_parent=True, cascade="delete, delete-orphan")
     user_id = Column(Integer, ForeignKey('user.id'))
-    user = relationship(User)
+    user = relationship(User, single_parent=True, cascade="delete, delete-orphan")
     picture = Column(String(80))
     changed = Column(DateTime, default=datetime.datetime.now, onupdate=datetime.datetime.now)
 
