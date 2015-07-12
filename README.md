@@ -17,17 +17,18 @@ This application can be used in two ways. Set up the Vagrant machine, which incl
 Note for manual - If you have PIP for Python, you can use it to quickly download/install the python modules.
 you can find it at https://pypi.python.org/pypi/pip/
 
-###Both:
+####Both:
 -Google+ Account [Required for Login] - This website uses Oauth2 Authentication through Google+ for secure logins.
 -Google Developers [Optional] - To control the website logins and allow logins from other computers, Google Developers is required.
   -see https://console.developers.google.com and at the --Extras-- under installation below.
 
-###Vagrant:
+####Vagrant:
 - VirtualBox [Required]: Provides functions needed by Vagrant.
   - https://www.virtualbox.org/wiki/Downloads for download
 - Vagrant [Required]: Virtual Machine System
   - see https://www.vagrantup.com/downloads.html for download
-###Manual:
+
+####Manual:
 - Python [Required]: Designed for 2.7, though it may work on others.
   - see https://www.python.org/downloads/ for download.
 - psycopg2 [Required]: A Python Module to connect with PostgreSQL.
@@ -47,12 +48,12 @@ you can find it at https://pypi.python.org/pypi/pip/
 Place this folder somewhere where you wish to run it from. Then Follow the instructions below.
 If you have the manual requirements fulfilled, you can skip ahead to --From Manual--
 
-###With Vagrant
+####With Vagrant
 - In the command line/Terminal, navigate to Catalog/vagrant and run `vagrant up`
 - Once that completes, run `vagrant ssh` to connect to the machine.
 - Inside the vm, run `cd /vagrant/catalog`, and continue the instructions below.
 
-###From Manual
+####From Manual
 - once inside catalog, use `python application.py` to run the Flask Application. the website can be found by opening a - web browser and going to `http://localhost:5000/`.
 - Users on the website can now log in using google+ to create categories and items. Users can create items their own private categories, as well as those marked as public Categories.
 - Users can edit and delete their own items and categories, as well as deleting items in categories they own.
@@ -60,7 +61,7 @@ If you have the manual requirements fulfilled, you can skip ahead to --From Manu
 - The Webserver can be stopped with Ctrl+C on the Vagrant. (Command+C for Mac)
 - While it stopped, the database can be wiped by deleting `catalog.db` from `Vagrant/catalog`. Make sure to also delete the contents of `Vagrant/catalog/static/pictures/`.
 
-###Extras
+####Extras
 - To Disable the testdata function, as well as the extra information given on database errors, open up `Vagrant/catalog/application.py`, Navigate to `Server Settings` and change DEBUG to False (no quotes).
 - To Change the url that can be used to visit the website, open up `Vagrant/catalog/application.py`, Navigate to `Server Settings` and change URL and PORT to the desired values.
 - With the included files, Google+ will only accept log in attempts from `http://localhost:5000/` or `http://192.168.1.180:5000/`.
@@ -81,9 +82,10 @@ This application has been modified to have support for images, increased protect
 
 
 ##Changelog
-###Version 1.0
+####Version 1.0
 - First Submitted Version.
-###Version 1.1
+
+####Version 1.1
 - Second Version.
   - Fixed an issue with Flask 0.10
   - Simplified the login requirements accross the functions.
@@ -91,7 +93,7 @@ This application has been modified to have support for images, increased protect
   - Added some cascades to the database setup.
   - Fixed an issue where a item could be entered without a name.
 
-###Comments
+##Comments
 Flask is Awesome! :D
 I have been working on side projects using it, and it's a lot better than just using Apache and HTML pages.
 While implementing the images, I found conflicting opinions about whether or not to store the images using the database you are using. The general consensus seemed to be no, unless consistency is really important.
